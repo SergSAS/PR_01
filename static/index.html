@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видео Обработка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #responseMessage {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #e9e9e9;
+        }
+
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Загрузка и обработка видео</h1>
+    <form id="uploadForm">
+        <label for="videoFile">Выберите видео:</label>
+        <input type="file" id="videoFile" name="file" accept="video/*" required>
+        <button type="submit">Загрузить и обработать</button>
+    </form>
+
+    <div id="responseMessage"></div>
+
+    <div id="videoResult"></div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const responseMessage = document.getElementById('responseMessage');
+        const videoResult = document.getElementById('videoResult');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('videoFile');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            responseMessage.innerHTML = 'Обработка...';
+            videoResult.innerHTML = '';
+
+            try {
+                const response = await fetch('/process_video/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки: ' + response.statusText);
+                }
+
+                const data = await response.json();
+
+
+                responseMessage.innerHTML = `
+                    <p><strong>Сообщение:</strong> ${data.message}</p>
+                    <p><strong>IN Count:</strong> ${data.in_count}</p>
+                    <p><strong>OUT Count:</strong> ${data.out_count}</p>
+                `;
+
+
+                if (data.processed_video_link) {
+                    videoResult.innerHTML = `
+                        <p><strong>Обработанное видео:</strong></p>
+                        <a href="${data.processed_video_link}" target="_blank">Скачать или просмотреть обработанное видео</a>
+                    `;
+                }
+            } catch (error) {
+                responseMessage.innerHTML =
+                    `<p style="color: red;"><strong>Ошибка:</strong> ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
