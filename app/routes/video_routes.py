@@ -6,16 +6,20 @@ import shutil
 from app.services.video_processing import process_video
 from app.config.settings import settings
 from app.services.google_drive import upload_to_google_drive
+from app.models.response_models import ProcessedVideoResponse  # Импортируем модель
 
 router = APIRouter()
 
+# Убедимся, что папки существуют
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.OUTPUT_FOLDER, exist_ok=True)
 
 
-
-@router.post("/process_video/")
+@router.post("/process_video/", response_model=ProcessedVideoResponse)
 async def upload_and_process_video(file: UploadFile = File(...)):
+    """
+    Эндпоинт для обработки видео: подсчет объектов IN/OUT и сохранение результата на Google Drive.
+    """
     try:
         # Сохраняем загруженный файл
         upload_path = os.path.join(settings.UPLOAD_FOLDER, file.filename)
@@ -34,15 +38,17 @@ async def upload_and_process_video(file: UploadFile = File(...)):
         clear_folder(settings.UPLOAD_FOLDER)
         clear_folder(settings.OUTPUT_FOLDER)
 
-        # Возвращаем данные пользователю
-        return JSONResponse(content={
-            "message": "Видео обработано успешно",
-            "in_count": in_count,
-            "out_count": out_count,
-            "processed_video_link": google_drive_link
-        })
+        # Возвращаем данные пользователю через Pydantic-модель
+        return ProcessedVideoResponse(
+            message="Видео обработано успешно",
+            in_count=in_count,
+            out_count=out_count,
+            processed_video_link=google_drive_link
+        )
     except Exception as e:
+        # Если возникает ошибка, возвращаем JSON-ответ с деталями
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 def clear_folder(folder_path: str):
     """
@@ -61,8 +67,3 @@ def clear_folder(folder_path: str):
                 shutil.rmtree(file_path)  # Удаляет папку и её содержимое
         except Exception as e:
             print(f"Ошибка при удалении {file_path}: {e}")
-
-
-
-
-

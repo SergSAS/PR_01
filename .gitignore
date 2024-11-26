@@ -65,6 +65,7 @@ Thumbs.db
 *.ckpt
 *.pkl
 *.joblib
+*.pt
 
 
 # Other unnecessary files
