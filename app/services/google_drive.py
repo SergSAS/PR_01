@@ -1,13 +1,17 @@
 import os
+from dotenv import load_dotenv
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# Путь к файлу с учетными данными сервисного аккаунта
-CREDENTIALS_FILE = './app/services/service_account.json'
+# Загружаем переменные окружения из .env
+load_dotenv()
+
+# Получаем путь к файлу из переменных окружения
+CREDENTIALS_FILE = os.getenv('GOOGLE_SERVICE_ACCOUNT_PATH')
 
 # ID папки Google Drive, куда будут загружаться обработанные видео
-FOLDER_ID = '1fXacXVw9injNV9BJ4SfD7IJ9wck1-Jp0'
+FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID')
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
@@ -23,6 +27,10 @@ def upload_to_google_drive(file_path):
             raise FileNotFoundError(f"Файл {file_path} не найден.")
 
         print(f"Инициализация Google Drive API с использованием учетных данных: {CREDENTIALS_FILE}")
+
+        # Проверка существования файла service_account.json
+        if not CREDENTIALS_FILE or not os.path.exists(CREDENTIALS_FILE):
+            raise FileNotFoundError(f"Файл учетных данных {CREDENTIALS_FILE} не найден. Проверьте .env.")
 
         # Аутентификация через сервисный аккаунт
         credentials = service_account.Credentials.from_service_account_file(
