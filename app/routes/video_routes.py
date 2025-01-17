@@ -4,9 +4,10 @@ from datetime import datetime
 import os
 import shutil
 from app.services.video_processing import process_video
+from app.services.image_processing import process_image  # Импортируем обработчик изображений
 from app.config.settings import settings
 from app.services.google_drive import upload_to_google_drive
-from app.models.response_models import ProcessedVideoResponse  # Импортируем модель
+from app.models.response_models import ProcessedVideoResponse, ProcessedImageResponse  # Импортируем модели
 
 router = APIRouter()
 
@@ -44,6 +45,38 @@ async def upload_and_process_video(file: UploadFile = File(...)):
             in_count=in_count,
             out_count=out_count,
             processed_video_link=google_drive_link
+        )
+    except Exception as e:
+        # Если возникает ошибка, возвращаем JSON-ответ с деталями
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.post("/process_image/", response_model=ProcessedImageResponse)
+async def upload_and_process_image(file: UploadFile = File(...)):
+    """
+    Эндпоинт для обработки изображения с использованием модели YOLO.
+    """
+    try:
+        # Сохраняем загруженный файл
+        upload_path = os.path.join(settings.UPLOAD_FOLDER, file.filename)
+        with open(upload_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Обрабатываем изображение
+        num_objects, output_path = process_image(upload_path, settings.OUTPUT_FOLDER)
+
+        # Загрузка обработанного изображения на Google Drive
+        google_drive_link = upload_to_google_drive(output_path)
+
+        # Очистка папок после успешной обработки
+        clear_folder(settings.UPLOAD_FOLDER)
+        clear_folder(settings.OUTPUT_FOLDER)
+
+        # Возвращаем данные пользователю через Pydantic-модель
+        return ProcessedImageResponse(
+            message="Изображение обработано успешно",
+            num_objects=num_objects,
+            processed_image_link=google_drive_link
         )
     except Exception as e:
         # Если возникает ошибка, возвращаем JSON-ответ с деталями
