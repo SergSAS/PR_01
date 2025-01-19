@@ -74,3 +74,4 @@ Thumbs.db
 *.swp
 *.swo
 *.orig
+app/services/service_account.json
