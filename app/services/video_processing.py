@@ -19,8 +19,12 @@ def process_video(video_path: str, output_video_path: str):
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     video_writer = cv2.VideoWriter(output_video_path, fourcc, fps, (w, h))
 
+    #center_x = w // 2
+    #line_points = [(center_x, 0), (center_x, h)]
+
     center_x = w // 2
-    line_points = [(center_x, 0), (center_x, h)]
+    center_y = h // 2  # Середина высоты линии подсчета
+    line_points = [(center_x, h), (center_x, center_y)]
 
     counter = solutions.ObjectCounter(
         show=False,
